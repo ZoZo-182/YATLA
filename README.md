@@ -1,4 +1,4 @@
-![readme badge for tests](https://github.com/ZoZo-182/todo-list-app/actions/workflows/ci.yml/badge.svg) \
+![readme badge for tests](https://github.com/ZoZo-182/todo-list-app/actions/workflows/ci.yml/badge.svg)
 ## About The Project
 A frankenstien project full of various services I wanted to integrate just tosay I did it.
 
@@ -15,6 +15,7 @@ At the end of the day it's just another todo list app.
 ## Roadmap
 - [ ] Separate user creds from todo list content (not really together anyways, I just had a spot for it In the user cred db). Will be using Redis for todo list content
 - [ ] okay actually implement Redis
+- [ ] For some reason I have been urging myself to wait until I am 'done' to refactor but I can't take it anymore. do this asap.
 - [ ] user can make multiple lists 
 - [ ] these lists appear on sticky notes. pss psss come here svg.
 - [ ] let users change the color of their sticky notes but lock it behind a paywall - just as an excuse to add stripe integration lmao
@@ -22,6 +23,7 @@ At the end of the day it's just another todo list app.
     - [ ] oh god well now I also need to add Docker for bragging rights, and plus I get to add that cute cd.svg badge to my project!
 - [ ] rename at some point
 - [ ] find an excuse to use either a .sh file or grunt idk why, I'm just really feeling it lately.
+- [ ] blacksmith instead of ubuntu-latest?
 
 ## License
 MIT. See `LICENSE.txt` for more information.
