@@ -28,6 +28,8 @@ At the end of the day it's just another todo list app.
 - [ ] rename at some point
 - [ ] find an excuse to use either a .sh file or grunt idk why, I'm just really feeling it lately.
 - [ ] blacksmith instead of ubuntu-latest?
+- [ ] I want something to do with openclaw... 
+    - [ ] time to dig
 
 ## License
 MIT. See `LICENSE` for more information.
