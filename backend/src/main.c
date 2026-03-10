@@ -14,8 +14,8 @@ int main(int argc, char *const *argv) {
   }
 
   char *err_msg = 0;
+  
   int rc = sqlite3_open("credentials.db", &db);
-
   if (rc != SQLITE_OK) {
     fprintf(stderr, "Cannot open database: %s\n", sqlite3_errmsg(db));
     return 1;
@@ -29,8 +29,8 @@ int main(int argc, char *const *argv) {
               "first_name TEXT NOT NULL,"
               "last_name TEXT NOT NULL,"
               "email TEXT UNIQUE NOT NULL,"
-              "password TEXT NOT NULL,"
-              "todolist TEXT)"; // the text will be json, so parse.
+              "password TEXT NOT NULL)";
+
   rc = sqlite3_exec(db, sql, 0, 0, &err_msg);
 
   if (rc != SQLITE_OK) {

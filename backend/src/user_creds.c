@@ -30,7 +30,7 @@ char *hash_password(char *password) {
 }
 
 bool insert_user(sqlite3 *db, ConnInfo *user_info) {
-//  char *err_msg = 0;
+  //  char *err_msg = 0;
   sqlite3_stmt *statement;
   char *hashed_password = hash_password(user_info->password);
 
@@ -65,7 +65,7 @@ bool insert_user(sqlite3 *db, ConnInfo *user_info) {
   }
 }
 
-char* check_user(sqlite3 *db, ConnInfo *user_info) {
+char *check_user(sqlite3 *db, ConnInfo *user_info) {
   sqlite3_stmt *statement;
 
   // parameter binding instead of using sprintf (unsafe!)
@@ -73,7 +73,7 @@ char* check_user(sqlite3 *db, ConnInfo *user_info) {
 
   int rc = sqlite3_prepare_v2(db, sql, strlen(sql), &statement, NULL);
   if (rc == SQLITE_OK) {
-      // compare client user to user creds in database
+    // compare client user to user creds in database
     sqlite3_bind_text(statement, 1, user_info->email, -1, SQLITE_TRANSIENT);
     rc = sqlite3_step(statement);
     if (rc != SQLITE_ROW) {
@@ -82,18 +82,18 @@ char* check_user(sqlite3 *db, ConnInfo *user_info) {
       sqlite3_finalize(statement);
       return "incorrect email";
     }
-    // check if no rows returned. 
-   // if (!sqlite3_data_count(statement)) {
-   //     sqlite3_finalize(statement);
-   //     return "incorrect email";
-   // }
+    // check if no rows returned.
+    // if (!sqlite3_data_count(statement)) {
+    //     sqlite3_finalize(statement);
+    //     return "incorrect email";
+    // }
 
-
-    int correct_password = crypto_pwhash_str_verify(sqlite3_column_text(statement, 1), user_info->password,
-            strlen(user_info->password));
+    int correct_password = crypto_pwhash_str_verify(
+        sqlite3_column_text(statement, 1), user_info->password,
+        strlen(user_info->password));
     if (correct_password) {
-        sqlite3_finalize(statement);
-        return "incorrect password";
+      sqlite3_finalize(statement);
+      return "incorrect password";
     }
 
     sqlite3_finalize(statement);
@@ -144,36 +144,37 @@ static enum MHD_Result post_iterator(void *cls, enum MHD_ValueKind kind,
   return MHD_YES;
 }
 
-static enum MHD_Result register_user(void *cls, struct MHD_Connection *connection,
-                         const char *url, const char *method,
-                         const char *version, const char *upload_data,
-                         size_t *upload_data_size, void **con_cls) {
+static enum MHD_Result
+register_user(void *cls, struct MHD_Connection *connection, const char *url,
+              const char *method, const char *version, const char *upload_data,
+              size_t *upload_data_size, void **con_cls) {
   struct MHD_Response *response;
   int ret;
 
   if (strcmp(method, "OPTIONS") == 0) {
-      response = MHD_create_response_from_buffer(0, "", MHD_RESPMEM_PERSISTENT);
+    response = MHD_create_response_from_buffer(0, "", MHD_RESPMEM_PERSISTENT);
 
-      MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
-      MHD_add_response_header(response, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-      MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
-      ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
-      MHD_destroy_response(response);
-      return ret;
+    MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
+    MHD_add_response_header(response, "Access-Control-Allow-Methods",
+                            "POST, GET, OPTIONS");
+    MHD_add_response_header(response, "Access-Control-Allow-Headers",
+                            "Content-Type");
+    ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+    MHD_destroy_response(response);
+    return ret;
   }
 
   ConnInfo *user_info;
-  if(*con_cls == NULL) {
-      user_info = malloc(sizeof(ConnInfo));
-      if (!user_info) {
-          return MHD_NO;
-      }
-      memset(user_info, 0, sizeof(ConnInfo));
-      *con_cls = user_info;
+  if (*con_cls == NULL) {
+    user_info = malloc(sizeof(ConnInfo));
+    if (!user_info) {
+      return MHD_NO;
+    }
+    memset(user_info, 0, sizeof(ConnInfo));
+    *con_cls = user_info;
   } else {
-      user_info = *con_cls;
+    user_info = *con_cls;
   }
-
 
   if (strcmp(url, "/register") == 0 && strcmp(method, "POST") == 0) {
     if (user_info->pp == NULL) {
@@ -190,10 +191,13 @@ static enum MHD_Result register_user(void *cls, struct MHD_Connection *connectio
           !user_info->email || !user_info->password) {
         // send response
         const char *msg = "one or more of the user_info fields are empty";
-        response = MHD_create_response_from_buffer(strlen(msg), (void *) msg, MHD_RESPMEM_PERSISTENT);
+        response = MHD_create_response_from_buffer(strlen(msg), (void *)msg,
+                                                   MHD_RESPMEM_PERSISTENT);
         MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
-        MHD_add_response_header(response, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-        MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
+        MHD_add_response_header(response, "Access-Control-Allow-Methods",
+                                "POST, GET, OPTIONS");
+        MHD_add_response_header(response, "Access-Control-Allow-Headers",
+                                "Content-Type");
         ret = MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
 
         MHD_destroy_response(response);
@@ -207,52 +211,60 @@ static enum MHD_Result register_user(void *cls, struct MHD_Connection *connectio
         return ret;
       }
 
-     // int rc = sqlite3_open("credentials.db", &db);
-     // if (rc != SQLITE_OK) {
-     //   fprintf(stderr, "error opening database: %s (register_user)\n",
-     //           sqlite3_errmsg(db));
-     //   const char *msg = "error opening database.";
-     //   response = MHD_create_response_from_buffer(strlen(msg), (void *) msg, MHD_RESPMEM_PERSISTENT);
-     //   MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
-     //   ret = MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
+      // int rc = sqlite3_open("credentials.db", &db);
+      // if (rc != SQLITE_OK) {
+      //   fprintf(stderr, "error opening database: %s (register_user)\n",
+      //           sqlite3_errmsg(db));
+      //   const char *msg = "error opening database.";
+      //   response = MHD_create_response_from_buffer(strlen(msg), (void *) msg,
+      //   MHD_RESPMEM_PERSISTENT); MHD_add_response_header(response,
+      //   "Access-Control-Allow-Origin", "*"); ret =
+      //   MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
 
-     //   MHD_destroy_response(response);
-     //   MHD_destroy_post_processor(user_info->pp);
-     //   free(user_info->first_name);
-     //   free(user_info->last_name);
-     //   free(user_info->email);
-     //   free(user_info->password);
-     //   free(user_info);
-     //   return ret;
-     // }
+      //   MHD_destroy_response(response);
+      //   MHD_destroy_post_processor(user_info->pp);
+      //   free(user_info->first_name);
+      //   free(user_info->last_name);
+      //   free(user_info->email);
+      //   free(user_info->password);
+      //   free(user_info);
+      //   return ret;
+      // }
       bool inserted_user = insert_user(db, user_info);
       if (!inserted_user) {
-          const char *msg = "Failed to register user.";
-          response = MHD_create_response_from_buffer(strlen(msg), (void *)msg, MHD_RESPMEM_PERSISTENT);
-          MHD_add_response_header(response, "Access-Control-Allow-Origin","*");
-          MHD_add_response_header(response, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-          MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
-          ret = MHD_queue_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
-          MHD_destroy_response(response);
+        const char *msg = "Failed to register user.";
+        response = MHD_create_response_from_buffer(strlen(msg), (void *)msg,
+                                                   MHD_RESPMEM_PERSISTENT);
+        MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
+        MHD_add_response_header(response, "Access-Control-Allow-Methods",
+                                "POST, GET, OPTIONS");
+        MHD_add_response_header(response, "Access-Control-Allow-Headers",
+                                "Content-Type");
+        ret = MHD_queue_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR,
+                                 response);
+        MHD_destroy_response(response);
 
-     //     sqlite3_close(db);
+        //     sqlite3_close(db);
 
-          MHD_destroy_post_processor(user_info->pp);
-          free(user_info->first_name);
-          free(user_info->last_name);
-          free(user_info->email);
-          free(user_info->password);
-          free(user_info);
-          return ret;
+        MHD_destroy_post_processor(user_info->pp);
+        free(user_info->first_name);
+        free(user_info->last_name);
+        free(user_info->email);
+        free(user_info->password);
+        free(user_info);
+        return ret;
       }
       // sqlite3_close(db);
 
       const char *msg = "User Registered.";
-      response = MHD_create_response_from_buffer(strlen(msg), (void *) msg, MHD_RESPMEM_PERSISTENT);
-      
+      response = MHD_create_response_from_buffer(strlen(msg), (void *)msg,
+                                                 MHD_RESPMEM_PERSISTENT);
+
       MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
-      MHD_add_response_header(response, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-      MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
+      MHD_add_response_header(response, "Access-Control-Allow-Methods",
+                              "POST, GET, OPTIONS");
+      MHD_add_response_header(response, "Access-Control-Allow-Headers",
+                              "Content-Type");
 
       ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
       MHD_destroy_response(response);
@@ -268,37 +280,21 @@ static enum MHD_Result register_user(void *cls, struct MHD_Connection *connectio
       return ret;
     }
   } else if (strcmp(method, "POST") == 0 && strcmp(url, "/login")) {
-      char *checked_user = check_user(db, user_info);
-      if (!checked_user) {
-          const char *msg = "login failed.";
-          response = MHD_create_response_from_buffer(strlen(msg), (void *)msg, MHD_RESPMEM_PERSISTENT);
-          MHD_add_response_header(response, "Access-Control-Allow-Origin","*");
-          MHD_add_response_header(response, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-          MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
-          ret = MHD_queue_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
-          MHD_destroy_response(response);
-
-     //     sqlite3_close(db);
-
-          MHD_destroy_post_processor(user_info->pp);
-          free(user_info->first_name);
-          free(user_info->last_name);
-          free(user_info->email);
-          free(user_info->password);
-          free(user_info);
-          return ret;
-      }
-      // sqlite3_close(db);
-
-      const char *msg = "User Registered.";
-      response = MHD_create_response_from_buffer(strlen(msg), (void *) msg, MHD_RESPMEM_PERSISTENT);
-      
+    char *checked_user = check_user(db, user_info);
+    if (!checked_user) {
+      const char *msg = "login failed.";
+      response = MHD_create_response_from_buffer(strlen(msg), (void *)msg,
+                                                 MHD_RESPMEM_PERSISTENT);
       MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
-      MHD_add_response_header(response, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-      MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
-
-      ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+      MHD_add_response_header(response, "Access-Control-Allow-Methods",
+                              "POST, GET, OPTIONS");
+      MHD_add_response_header(response, "Access-Control-Allow-Headers",
+                              "Content-Type");
+      ret = MHD_queue_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR,
+                               response);
       MHD_destroy_response(response);
+
+      //     sqlite3_close(db);
 
       MHD_destroy_post_processor(user_info->pp);
       free(user_info->first_name);
@@ -306,19 +302,43 @@ static enum MHD_Result register_user(void *cls, struct MHD_Connection *connectio
       free(user_info->email);
       free(user_info->password);
       free(user_info);
-          // do stuff
-  } else {
-      const char *not_found = "Not Found";
-      response = MHD_create_response_from_buffer(strlen(not_found), (void*) not_found, MHD_RESPMEM_PERSISTENT);
-      ret = MHD_queue_response(connection, MHD_HTTP_NOT_FOUND, response);
-      MHD_destroy_response(response);
-
-      free(user_info->first_name);
-      free(user_info->last_name);
-      free(user_info->email);
-      free(user_info->password);
-      free(user_info);
       return ret;
+    }
+    // sqlite3_close(db);
+
+    const char *msg = "User Registered.";
+    response = MHD_create_response_from_buffer(strlen(msg), (void *)msg,
+                                               MHD_RESPMEM_PERSISTENT);
+
+    MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
+    MHD_add_response_header(response, "Access-Control-Allow-Methods",
+                            "POST, GET, OPTIONS");
+    MHD_add_response_header(response, "Access-Control-Allow-Headers",
+                            "Content-Type");
+
+    ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+    MHD_destroy_response(response);
+
+    MHD_destroy_post_processor(user_info->pp);
+    free(user_info->first_name);
+    free(user_info->last_name);
+    free(user_info->email);
+    free(user_info->password);
+    free(user_info);
+    // do stuff
+  } else {
+    const char *not_found = "Not Found";
+    response = MHD_create_response_from_buffer(
+        strlen(not_found), (void *)not_found, MHD_RESPMEM_PERSISTENT);
+    ret = MHD_queue_response(connection, MHD_HTTP_NOT_FOUND, response);
+    MHD_destroy_response(response);
+
+    free(user_info->first_name);
+    free(user_info->last_name);
+    free(user_info->email);
+    free(user_info->password);
+    free(user_info);
+    return ret;
   }
   return MHD_NO;
 }
@@ -339,8 +359,8 @@ int MHD_background(int argc, char *const *argv) {
   }
   /* initialize PRNG */
   srandom((unsigned int)time(NULL));
-  d = MHD_start_daemon(MHD_USE_DEBUG, atoi(argv[1]), NULL, NULL, &register_user, NULL,
-                       MHD_OPTION_CONNECTION_TIMEOUT, (unsigned int)15,
+  d = MHD_start_daemon(MHD_USE_DEBUG, atoi(argv[1]), NULL, NULL, &register_user,
+                       NULL, MHD_OPTION_CONNECTION_TIMEOUT, (unsigned int)15,
                        MHD_OPTION_NOTIFY_COMPLETED, NULL, NULL, MHD_OPTION_END);
   if (NULL == d)
     return 1;
