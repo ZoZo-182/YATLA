@@ -1,8 +1,6 @@
-user_creds
 *.db*
 .Rdata
 .Rhistory
-AGENTS.md
 compile_errors.txt
 stderr.log
 test_errors.txt
@@ -10,3 +8,4 @@ test_errors.txt
 *.dSYM
 .DS_Store
 backend/build/*
+.env
