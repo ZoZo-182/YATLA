@@ -14,6 +14,7 @@ sqlite3 *db = NULL;
 extern sqlite3 *db;
 #endif
 
+//mini handlers
 
 static enum MHD_Result post_iterator(void *cls, enum MHD_ValueKind kind,
                                      const char *key, const char *filename,
