@@ -1,7 +1,8 @@
 #include "../include/request_handling.h"
 #include "../include/user_db.h"
+#include <stdio.h>
 #include <microhttpd.h>
-#include <sodium.h>
+//#include <sodium.h>
 #include <sqlite3.h>
 #include <stdlib.h>
 #include <string.h>
@@ -159,8 +160,8 @@ register_user(void *cls, struct MHD_Connection *connection, const char *url,
                               "Content-Type");
 
       ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
-      MHD_destroy_response(response);
 
+      MHD_destroy_response(response);
       MHD_destroy_post_processor(user_info->pp);
       free(user_info->first_name);
       free(user_info->last_name);
@@ -168,7 +169,6 @@ register_user(void *cls, struct MHD_Connection *connection, const char *url,
       free(user_info->password);
       free(user_info);
 
-      // return MHD_queue_response(connection, code, response);
       return ret;
     }
   } else if (strcmp(method, "POST") == 0 && strcmp(url, "/login")) {
@@ -184,10 +184,8 @@ register_user(void *cls, struct MHD_Connection *connection, const char *url,
                               "Content-Type");
       ret = MHD_queue_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR,
                                response);
+
       MHD_destroy_response(response);
-
-      //     sqlite3_close(db);
-
       MHD_destroy_post_processor(user_info->pp);
       free(user_info->first_name);
       free(user_info->last_name);
@@ -196,7 +194,6 @@ register_user(void *cls, struct MHD_Connection *connection, const char *url,
       free(user_info);
       return ret;
     }
-    // sqlite3_close(db);
 
     const char *msg = "User Registered.";
     response = MHD_create_response_from_buffer(strlen(msg), (void *)msg,
@@ -217,7 +214,8 @@ register_user(void *cls, struct MHD_Connection *connection, const char *url,
     free(user_info->email);
     free(user_info->password);
     free(user_info);
-    // do stuff
+    
+    return ret;
   } else {
     const char *not_found = "Not Found";
     response = MHD_create_response_from_buffer(
