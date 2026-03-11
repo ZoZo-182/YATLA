@@ -1,12 +1,12 @@
 #include "../lib/munit/munit.h"
-#include "../include/user_creds.h"
+#include "../include/request_handling.h"
+#include "../include/user_db.h"
 #include <sodium.h>
+#include <stdio.h>
+
 
 ConnInfo user = {NULL, "Bob", "Smith", "chickenbirriataco@gmail.com", "yummy"};
 
-// dummy def for linking
-// i didnt like this - simple but macro is cleaner
-//sqlite3 *db = NULL;
 
 MunitResult test_pwhash(const MunitParameter params[], void* user_data_or_fixture) {
     char *result = hash_password(user.password);
