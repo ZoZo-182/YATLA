@@ -14,7 +14,9 @@ sqlite3 *db = NULL;
 extern sqlite3 *db;
 #endif
 
-//mini handlers
+
+
+
 
 static enum MHD_Result post_iterator(void *cls, enum MHD_ValueKind kind,
                                      const char *key, const char *filename,
@@ -112,14 +114,9 @@ handle_request(void *cls, struct MHD_Connection *connection, const char *url,
         MHD_add_response_header(response, "Access-Control-Allow-Headers",
                                 "Content-Type");
         ret = MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
-
         MHD_destroy_response(response);
         MHD_destroy_post_processor(user_info->pp);
-        free(user_info->first_name);
-        free(user_info->last_name);
-        free(user_info->email);
-        free(user_info->password);
-        free(user_info);
+        destroy_conn_info(user_info);
 
         return ret;
       }
@@ -136,19 +133,12 @@ handle_request(void *cls, struct MHD_Connection *connection, const char *url,
                                 "Content-Type");
         ret = MHD_queue_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR,
                                  response);
+
         MHD_destroy_response(response);
-
-        //     sqlite3_close(db);
-
         MHD_destroy_post_processor(user_info->pp);
-        free(user_info->first_name);
-        free(user_info->last_name);
-        free(user_info->email);
-        free(user_info->password);
-        free(user_info);
+        destroy_conn_info(user_info);
         return ret;
       }
-      // sqlite3_close(db);
 
       const char *msg = "User Registered.";
       response = MHD_create_response_from_buffer(strlen(msg), (void *)msg,
@@ -164,11 +154,7 @@ handle_request(void *cls, struct MHD_Connection *connection, const char *url,
 
       MHD_destroy_response(response);
       MHD_destroy_post_processor(user_info->pp);
-      free(user_info->first_name);
-      free(user_info->last_name);
-      free(user_info->email);
-      free(user_info->password);
-      free(user_info);
+      destroy_conn_info(user_info);
 
       return ret;
     }
@@ -188,11 +174,8 @@ handle_request(void *cls, struct MHD_Connection *connection, const char *url,
 
       MHD_destroy_response(response);
       MHD_destroy_post_processor(user_info->pp);
-      free(user_info->first_name);
-      free(user_info->last_name);
-      free(user_info->email);
-      free(user_info->password);
-      free(user_info);
+      destroy_conn_info(user_info);
+
       return ret;
     }
 
@@ -207,14 +190,10 @@ handle_request(void *cls, struct MHD_Connection *connection, const char *url,
                             "Content-Type");
 
     ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
-    MHD_destroy_response(response);
 
+    MHD_destroy_response(response);
     MHD_destroy_post_processor(user_info->pp);
-    free(user_info->first_name);
-    free(user_info->last_name);
-    free(user_info->email);
-    free(user_info->password);
-    free(user_info);
+    destroy_conn_info(user_info);
     
     return ret;
   } else {
@@ -222,13 +201,10 @@ handle_request(void *cls, struct MHD_Connection *connection, const char *url,
     response = MHD_create_response_from_buffer(
         strlen(not_found), (void *)not_found, MHD_RESPMEM_PERSISTENT);
     ret = MHD_queue_response(connection, MHD_HTTP_NOT_FOUND, response);
-    MHD_destroy_response(response);
 
-    free(user_info->first_name);
-    free(user_info->last_name);
-    free(user_info->email);
-    free(user_info->password);
-    free(user_info);
+    MHD_destroy_response(response);
+    destroy_conn_info(user_info);
+
     return ret;
   }
   return MHD_NO;

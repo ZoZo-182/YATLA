@@ -6,6 +6,7 @@
 #include "../include/user_db.h"
 
 
+
 char *hash_password(char *password) {
   char *hashed_password = malloc(crypto_pwhash_STRBYTES);
   if (!hashed_password) {
@@ -95,3 +96,10 @@ char *check_user(sqlite3 *db, ConnInfo *user_info) {
   }
 }
 
+void destroy_conn_info(ConnInfo *user_info) {
+    free(user_info->first_name);
+    free(user_info->last_name);
+    free(user_info->email);
+    free(user_info->password);
+    free(user_info);
+}
