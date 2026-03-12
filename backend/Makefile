@@ -7,7 +7,7 @@ all: app test
 
 app:
 	mkdir -p ./build
-	$(CC) $(CFLAGS) -o ./build/todo_app src/main.c src/request_handling.c -lmicrohttpd -lsodium -lsqlite3 -lhiredis -lcurl -lrhonabwy
+	$(CC) $(CFLAGS) -o ./build/todo_app src/main.c src/request_handling.c src/user_db.c -lmicrohttpd -lsodium -lsqlite3 -lhiredis -lcurl -lrhonabwy
 
 runa:
 	./build/todo_app 8080
