@@ -2,9 +2,10 @@
 #define REQUEST_HANDLING_H
 
 #include <stdbool.h>
+#include <microhttpd.h>
 
 
-// struct for user register data
+// struct for user register data + pp struct for post req
 typedef struct 
 {
     struct MHD_PostProcessor *pp;
@@ -13,6 +14,7 @@ typedef struct
     char *email;
     char *password;
 } ConnInfo;
+
 
 int MHD_background(int argc, char *const *argv); 
 

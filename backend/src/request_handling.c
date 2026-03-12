@@ -1,8 +1,7 @@
 #include "../include/request_handling.h"
 #include "../include/user_db.h"
 #include <stdio.h>
-#include <microhttpd.h>
-//#include <sodium.h>
+//#include <microhttpd.h>
 #include <sqlite3.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,8 +14,42 @@ extern sqlite3 *db;
 #endif
 
 
+/*
+ * forward dec
+ */
+
+static enum MHD_Result handle_options(struct MHD_Connection *connection, 
+        struct MHD_Response *response);
+
+static enum MHD_Result handle_register(struct MHD_Connection *connection, 
+        struct MHD_Response *response);
+
+static enum MHD_Result handle_login(struct MHD_Connection *connection, 
+        struct MHD_Response *response);
+
+static enum MHD_Result handle_not_found(struct MHD_Connection *connection, 
+        struct MHD_Response *response);
 
 
+/*
+ * mini handlers 
+ */
+
+static enum MHD_Result handle_options(struct MHD_Connection *connection, 
+        struct MHD_Response *response) {
+
+    enum MHD_Result ret;
+    response = MHD_create_response_from_buffer(0, "", MHD_RESPMEM_PERSISTENT);
+
+    MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
+    MHD_add_response_header(response, "Access-Control-Allow-Methods",
+            "POST, GET, OPTIONS");
+    MHD_add_response_header(response, "Access-Control-Allow-Headers",
+            "Content-Type");
+    ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+    MHD_destroy_response(response);
+    return ret;
+}
 
 static enum MHD_Result post_iterator(void *cls, enum MHD_ValueKind kind,
                                      const char *key, const char *filename,
@@ -59,6 +92,7 @@ static enum MHD_Result post_iterator(void *cls, enum MHD_ValueKind kind,
   return MHD_YES;
 }
 
+
 static enum MHD_Result
 handle_request(void *cls, struct MHD_Connection *connection, const char *url,
               const char *method, const char *version, const char *upload_data,
@@ -67,16 +101,7 @@ handle_request(void *cls, struct MHD_Connection *connection, const char *url,
   int ret;
 
   if (strcmp(method, "OPTIONS") == 0) {
-    response = MHD_create_response_from_buffer(0, "", MHD_RESPMEM_PERSISTENT);
-
-    MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
-    MHD_add_response_header(response, "Access-Control-Allow-Methods",
-                            "POST, GET, OPTIONS");
-    MHD_add_response_header(response, "Access-Control-Allow-Headers",
-                            "Content-Type");
-    ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
-    MHD_destroy_response(response);
-    return ret;
+      return handle_options(connection, response);
   }
 
   ConnInfo *user_info;
