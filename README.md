@@ -16,7 +16,7 @@ At the end of the day it's just another todo list app. \
 ... and now you can mess around with it in your own environment :D
 
 ## Roadmap
-- [x] Separate user creds from todo list content (not really together anyways, I just had a spot for it In the user cred db). Will be using Redis for todo list content
+- [x] Separate user creds from todo list content (not really together anyways, I just had a spot for it In the user cred db). Will be using Redis for todo list content. NO REDIS
 - [ ] Hey, dont forget about oauth...
     - [ ] get a client for github and google going.
         - [ ] jwt no opaque
