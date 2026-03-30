@@ -7,7 +7,7 @@ At the end of the day it's just another todo list app. \
 *... actually something like this would be nice for a resume if I had legit reasons for using the services in here. It's all just vibes (feel good vibes not vibe coding vibes).* \
 *omg okay I just wanted an excuse to learn more web dev stuff as an embedded software engineer, sue me*
 
-## Usage \
+## Usage 
 *insert domain*
 *insert gif of navigating the site. Actually try to make it cute with zoom and stuff*
 
@@ -20,7 +20,8 @@ At the end of the day it's just another todo list app. \
 - [ ] Hey, dont forget about oauth...
     - [ ] get a client for github and google going.
         - [ ] jwt no opaque
-    - [ ] make your own server 
+    - [ ] make your own server
+
 ~~- [ ] okay actually implement Redis~~
 - [x] For some reason I have been urging myself to wait until I am 'done' to refactor but I can't take it anymore. do this asap.
 - [ ] user can make multiple lists 
