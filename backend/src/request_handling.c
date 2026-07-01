@@ -1,5 +1,6 @@
 #include "../include/request_handling.h"
 #include "../include/user_db.h"
+#include <microhttpd.h>
 #include <stdio.h>
 #include <sqlite3.h>
 #include <stdlib.h>
@@ -14,18 +15,20 @@ extern sqlite3 *db;
 
 
 // forward dec
-static enum MHD_Result handle_options(struct MHD_Connection *connection, struct MHD_Response *response);
-static enum MHD_Result handle_success(struct MHD_Connection *connection, struct MHD_Response *response, status_t code);
-static enum MHD_Result handle_not_found(struct MHD_Connection *connection, struct MHD_Response *response, status_t code);
-static enum MHD_Result handle_bad_request(struct MHD_Connection *connection, struct MHD_Response *response, status_t code);
-static enum MHD_Result handle_internal_server_error(struct MHD_Connection *connection, struct MHD_Response *response, status_t code);
+static enum MHD_Result handle_options(struct MHD_Connection *connection);
+static enum MHD_Result handle_success(struct MHD_Connection *connection, status_t code);
+static enum MHD_Result handle_not_found(struct MHD_Connection *connection, status_t code);
+static enum MHD_Result handle_bad_request(struct MHD_Connection *connection, status_t code);
+static enum MHD_Result handle_internal_server_error(struct MHD_Connection *connection, status_t code);
 static const char *user_error_str(status_t code);
 
-// mini handlers 
-static enum MHD_Result handle_options(struct MHD_Connection *connection, struct MHD_Response *response) {
+/**********
+ * HANDLERS
+ ***********/
+static enum MHD_Result handle_options(struct MHD_Connection *connection) {
   enum MHD_Result ret;
 
-  response = MHD_create_response_from_buffer(0, "", MHD_RESPMEM_PERSISTENT);
+  struct MHD_Response *response = MHD_create_response_from_buffer(0, "", MHD_RESPMEM_PERSISTENT);
   MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
   MHD_add_response_header(response, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
   MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
@@ -34,28 +37,25 @@ static enum MHD_Result handle_options(struct MHD_Connection *connection, struct 
   return ret;
 }
 
-static enum MHD_Result handle_success(struct MHD_Connection *connection, struct MHD_Response *response, status_t code) {
+static enum MHD_Result handle_success(struct MHD_Connection *connection, status_t code) {
     enum MHD_Result ret;
     const char *msg = user_error_str(code);
 
-    response = MHD_create_response_from_buffer(strlen(msg), (void *)msg,
-        MHD_RESPMEM_PERSISTENT);
+    struct MHD_Response *response = MHD_create_response_from_buffer(strlen(msg), (void *)msg, MHD_RESPMEM_PERSISTENT);
     MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
-    MHD_add_response_header(response, "Access-Control-Allow-Methods",
-        "POST, GET, OPTIONS");
-    MHD_add_response_header(response, "Access-Control-Allow-Headers",
-        "Content-Type");
+    MHD_add_response_header(response, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+    MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
     ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
 
     MHD_destroy_response(response);
     return ret;
 }
 
-static enum MHD_Result handle_bad_request(struct MHD_Connection *connection, struct MHD_Response *response, status_t code) {
+static enum MHD_Result handle_bad_request(struct MHD_Connection *connection, status_t code) {
   enum MHD_Result ret;
   const char *msg = user_error_str(code);
 
-  response = MHD_create_response_from_buffer(strlen(msg), (void *)msg,
+  struct MHD_Response *response = MHD_create_response_from_buffer(strlen(msg), (void *)msg,
       MHD_RESPMEM_PERSISTENT);
   MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
   MHD_add_response_header(response, "Access-Control-Allow-Methods",
@@ -68,11 +68,11 @@ static enum MHD_Result handle_bad_request(struct MHD_Connection *connection, str
 }
 
 // why do i need enum before every MHD-Result?
-static enum MHD_Result handle_internal_server_error(struct MHD_Connection *connection, struct MHD_Response *response, status_t code) {
+static enum MHD_Result handle_internal_server_error(struct MHD_Connection *connection, status_t code) {
   enum MHD_Result ret;
   const char *msg = user_error_str(code);
 
-  response = MHD_create_response_from_buffer(strlen(msg), (void *)msg, MHD_RESPMEM_PERSISTENT);
+  struct MHD_Response *response = MHD_create_response_from_buffer(strlen(msg), (void *)msg, MHD_RESPMEM_PERSISTENT);
   MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
   MHD_add_response_header(response, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
   MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
@@ -81,11 +81,11 @@ static enum MHD_Result handle_internal_server_error(struct MHD_Connection *conne
   return ret;
 }
 
-static enum MHD_Result handle_not_found(struct MHD_Connection *connection, struct MHD_Response *response, status_t code) {
+static enum MHD_Result handle_not_found(struct MHD_Connection *connection, status_t code) {
   enum MHD_Result ret;
   const char *not_found = user_error_str(code);
 
-  response = MHD_create_response_from_buffer(
+  struct MHD_Response *response = MHD_create_response_from_buffer(
       strlen(not_found), (void *)not_found, MHD_RESPMEM_PERSISTENT);
   ret = MHD_queue_response(connection, MHD_HTTP_NOT_FOUND, response);
   MHD_destroy_response(response);
@@ -168,15 +168,13 @@ static enum MHD_Result post_iterator(void *cls, enum MHD_ValueKind kind,
 }
 
 
-static enum MHD_Result
-handle_request(void *cls, struct MHD_Connection *connection, const char *url,
-    const char *method, const char *version, const char *upload_data,
-    size_t *upload_data_size, void **con_cls) {
+static enum MHD_Result handle_request(void *cls, struct MHD_Connection *connection, const char *url,
+    const char *method, const char *version, const char *upload_data, size_t *upload_data_size, void **con_cls) {
+
   struct MHD_Response *response;
-  // int ret;
 
   if (strcmp(method, "OPTIONS") == 0) {
-    return handle_options(connection, response);
+    return handle_options(connection);
   }
 
   ConnInfo *user_info;
@@ -205,7 +203,7 @@ handle_request(void *cls, struct MHD_Connection *connection, const char *url,
       if (!user_info->first_name || !user_info->last_name ||
           !user_info->email || !user_info->password) {
         // i think some things need to be freed here... 
-        return handle_bad_request(connection, response, ERROR_REGISTER_USER);
+        return handle_bad_request(connection, ERROR_REGISTER_USER);
       }
 
       // change status_t to status_t
@@ -213,13 +211,13 @@ handle_request(void *cls, struct MHD_Connection *connection, const char *url,
       if (inserted_user != SUCCESS) {
         MHD_destroy_post_processor(user_info->pp);
         destroy_conn_info(user_info);
-        return handle_internal_server_error(connection, response, inserted_user);
+        return handle_internal_server_error(connection, inserted_user);
       }
 
       MHD_destroy_post_processor(user_info->pp);
       destroy_conn_info(user_info);
 
-      return handle_success(connection, response, inserted_user);
+      return handle_success(connection, inserted_user);
     }
     
   } else if (strcmp(method, "POST") == 0 && strcmp(url, "/login") == 0) { // if instead of else if?
@@ -229,16 +227,16 @@ handle_request(void *cls, struct MHD_Connection *connection, const char *url,
       MHD_destroy_post_processor(user_info->pp);
       destroy_conn_info(user_info);
 
-      return handle_internal_server_error(connection, response, login_user);
+      return handle_internal_server_error(connection, login_user);
     }
 
     MHD_destroy_post_processor(user_info->pp);
     destroy_conn_info(user_info);
 
-    return handle_success(connection, response, login_user);
+    return handle_success(connection, login_user);
   } else {
     destroy_conn_info(user_info);
-    return handle_not_found(connection, response, NOT_FOUND);
+    return handle_not_found(connection, NOT_FOUND);
   }
   return MHD_NO;
 }
