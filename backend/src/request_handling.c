@@ -191,8 +191,7 @@ static enum MHD_Result handle_request(void *cls, struct MHD_Connection *connecti
 
   if (strcmp(url, "/register") == 0 && strcmp(method, "POST") == 0) {
     if (user_info->pp == NULL) {
-      user_info->pp = MHD_create_post_processor(connection, 1024,
-          &post_iterator, user_info);
+      user_info->pp = MHD_create_post_processor(connection, 1024, &post_iterator, user_info);
       return MHD_YES;
     }
     if (*upload_data_size) {
@@ -200,9 +199,10 @@ static enum MHD_Result handle_request(void *cls, struct MHD_Connection *connecti
       *upload_data_size = 0;
       return MHD_YES;
     } else {
-      if (!user_info->first_name || !user_info->last_name ||
-          !user_info->email || !user_info->password) {
+      if (!user_info->first_name || !user_info->last_name || !user_info->email || !user_info->password) {
         // i think some things need to be freed here... 
+        MHD_destroy_post_processor(user_info->pp);
+        destroy_conn_info(user_info);
         return handle_bad_request(connection, ERROR_REGISTER_USER);
       }
 
