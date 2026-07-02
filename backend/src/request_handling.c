@@ -242,7 +242,7 @@ static enum MHD_Result handle_request(void *cls, struct MHD_Connection *connecti
     destroy_conn_info(user_info);
 
     if (login_user != SUCCESS) {
-      return handle_internal_server_error(connection, login_user);
+      return handle_bad_request(connection, login_user);
     }
 
     return handle_success(connection, login_user);
