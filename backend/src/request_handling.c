@@ -21,6 +21,14 @@ static enum MHD_Result handle_not_found(struct MHD_Connection *connection, statu
 static enum MHD_Result handle_bad_request(struct MHD_Connection *connection, status_t code);
 static enum MHD_Result handle_internal_server_error(struct MHD_Connection *connection, status_t code);
 static const char *user_error_str(status_t code);
+static void add_cors_headers(struct MHD_Response *response);
+
+
+static void add_cors_headers(struct MHD_Response *response) {
+  MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
+  MHD_add_response_header(response, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
+  MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
+}
 
 /**********
  * HANDLERS
@@ -29,26 +37,22 @@ static enum MHD_Result handle_options(struct MHD_Connection *connection) {
   enum MHD_Result ret;
 
   struct MHD_Response *response = MHD_create_response_from_buffer(0, "", MHD_RESPMEM_PERSISTENT);
-  MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
-  MHD_add_response_header(response, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-  MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
+  add_cors_headers(response);
   ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
   MHD_destroy_response(response);
   return ret;
 }
 
 static enum MHD_Result handle_success(struct MHD_Connection *connection, status_t code) {
-    enum MHD_Result ret;
-    const char *msg = user_error_str(code);
+  enum MHD_Result ret;
+  const char *msg = user_error_str(code);
 
-    struct MHD_Response *response = MHD_create_response_from_buffer(strlen(msg), (void *)msg, MHD_RESPMEM_PERSISTENT);
-    MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
-    MHD_add_response_header(response, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-    MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
-    ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+  struct MHD_Response *response = MHD_create_response_from_buffer(strlen(msg), (void *)msg, MHD_RESPMEM_PERSISTENT);
+  add_cors_headers(response);
+  ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
 
-    MHD_destroy_response(response);
-    return ret;
+  MHD_destroy_response(response);
+  return ret;
 }
 
 static enum MHD_Result handle_bad_request(struct MHD_Connection *connection, status_t code) {
@@ -57,11 +61,7 @@ static enum MHD_Result handle_bad_request(struct MHD_Connection *connection, sta
 
   struct MHD_Response *response = MHD_create_response_from_buffer(strlen(msg), (void *)msg,
       MHD_RESPMEM_PERSISTENT);
-  MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
-  MHD_add_response_header(response, "Access-Control-Allow-Methods",
-      "POST, GET, OPTIONS");
-  MHD_add_response_header(response, "Access-Control-Allow-Headers",
-      "Content-Type");
+  add_cors_headers(response);
   ret = MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
   MHD_destroy_response(response);
   return ret;
@@ -73,9 +73,7 @@ static enum MHD_Result handle_internal_server_error(struct MHD_Connection *conne
   const char *msg = user_error_str(code);
 
   struct MHD_Response *response = MHD_create_response_from_buffer(strlen(msg), (void *)msg, MHD_RESPMEM_PERSISTENT);
-  MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
-  MHD_add_response_header(response, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-  MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
+  add_cors_headers(response);
   ret = MHD_queue_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
   MHD_destroy_response(response);
   return ret;
@@ -85,8 +83,7 @@ static enum MHD_Result handle_not_found(struct MHD_Connection *connection, statu
   enum MHD_Result ret;
   const char *not_found = user_error_str(code);
 
-  struct MHD_Response *response = MHD_create_response_from_buffer(
-      strlen(not_found), (void *)not_found, MHD_RESPMEM_PERSISTENT);
+  struct MHD_Response *response = MHD_create_response_from_buffer(strlen(not_found), (void *)not_found, MHD_RESPMEM_PERSISTENT);
   ret = MHD_queue_response(connection, MHD_HTTP_NOT_FOUND, response);
   MHD_destroy_response(response);
   return ret;
