@@ -28,7 +28,7 @@ static enum MHD_Result send_text_response(struct MHD_Connection *connection, uns
 static void add_cors_headers(struct MHD_Response *response) {
   MHD_add_response_header(response, "Access-Control-Allow-Origin", "*");
   MHD_add_response_header(response, "Access-Control-Allow-Methods", "POST, GET, OPTIONS");
-  MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
+  MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type, Authorization");
 }
 
 static enum MHD_Result send_text_response(struct MHD_Connection *connection, unsigned int status_code, const char *body) {
