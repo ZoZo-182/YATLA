@@ -71,13 +71,7 @@ static enum MHD_Result handle_internal_server_error(struct MHD_Connection *conne
 }
 
 static enum MHD_Result handle_not_found(struct MHD_Connection *connection, status_t code) {
-  enum MHD_Result ret;
-  const char *not_found = user_error_str(code);
-
-  struct MHD_Response *response = MHD_create_response_from_buffer(strlen(not_found), (void *)not_found, MHD_RESPMEM_PERSISTENT);
-  ret = MHD_queue_response(connection, MHD_HTTP_NOT_FOUND, response);
-  MHD_destroy_response(response);
-  return ret;
+  return send_text_response(connection, MHD_HTTP_NOT_FOUND, user_error_str(code));
 }
 
 /*
