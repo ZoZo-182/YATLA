@@ -39,7 +39,7 @@ static enum MHD_Result send_text_response(struct MHD_Connection *connection, uns
 
   add_cors_headers(response);
 
-  ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+  ret = MHD_queue_response(connection, status_code, response);
   MHD_destroy_response(response);
 
   return ret;
