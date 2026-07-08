@@ -22,6 +22,7 @@ static enum MHD_Result handle_bad_request(struct MHD_Connection *connection, sta
 static enum MHD_Result handle_internal_server_error(struct MHD_Connection *connection, status_t code);
 static const char *user_error_str(status_t code);
 static void add_cors_headers(struct MHD_Response *response);
+static enum MHD_Result send_text_response(struct MHD_Connection *connection, unsigned int status_code, const char *body);
 
 
 static void add_cors_headers(struct MHD_Response *response) {
@@ -30,7 +31,21 @@ static void add_cors_headers(struct MHD_Response *response) {
   MHD_add_response_header(response, "Access-Control-Allow-Headers", "Content-Type");
 }
 
-/**********
+static enum MHD_Result send_text_response(struct MHD_Connection *connection, unsigned int status_code, const char *body) {
+  struct MHD_Response *response = NULL;
+  enum MHD_Result ret;
+
+  response = MHD_create_response_from_buffer(strlen(body), (void *)body, MHD_RESPMEM_PERSISTENT);
+
+  add_cors_headers(response);
+
+  ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
+  MHD_destroy_response(response);
+
+  return ret;
+}
+
+/***********
  * HANDLERS
  ***********/
 static enum MHD_Result handle_options(struct MHD_Connection *connection) {
@@ -44,39 +59,15 @@ static enum MHD_Result handle_options(struct MHD_Connection *connection) {
 }
 
 static enum MHD_Result handle_success(struct MHD_Connection *connection, status_t code) {
-  enum MHD_Result ret;
-  const char *msg = user_error_str(code);
-
-  struct MHD_Response *response = MHD_create_response_from_buffer(strlen(msg), (void *)msg, MHD_RESPMEM_PERSISTENT);
-  add_cors_headers(response);
-  ret = MHD_queue_response(connection, MHD_HTTP_OK, response);
-
-  MHD_destroy_response(response);
-  return ret;
+  return send_text_response(connection, MHD_HTTP_OK, user_error_str(code));
 }
 
 static enum MHD_Result handle_bad_request(struct MHD_Connection *connection, status_t code) {
-  enum MHD_Result ret;
-  const char *msg = user_error_str(code);
-
-  struct MHD_Response *response = MHD_create_response_from_buffer(strlen(msg), (void *)msg,
-      MHD_RESPMEM_PERSISTENT);
-  add_cors_headers(response);
-  ret = MHD_queue_response(connection, MHD_HTTP_BAD_REQUEST, response);
-  MHD_destroy_response(response);
-  return ret;
+  return send_text_response(connection, MHD_HTTP_BAD_REQUEST, user_error_str(code));
 }
 
-// why do i need enum before every MHD-Result?
 static enum MHD_Result handle_internal_server_error(struct MHD_Connection *connection, status_t code) {
-  enum MHD_Result ret;
-  const char *msg = user_error_str(code);
-
-  struct MHD_Response *response = MHD_create_response_from_buffer(strlen(msg), (void *)msg, MHD_RESPMEM_PERSISTENT);
-  add_cors_headers(response);
-  ret = MHD_queue_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR, response);
-  MHD_destroy_response(response);
-  return ret;
+  return send_text_response(connection, MHD_HTTP_INTERNAL_SERVER_ERROR, user_error_str(code));
 }
 
 static enum MHD_Result handle_not_found(struct MHD_Connection *connection, status_t code) {
