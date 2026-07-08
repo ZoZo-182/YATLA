@@ -4,6 +4,9 @@
 #include <stdbool.h>
 #include <microhttpd.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 // struct for user register data + pp struct for post req
 // rename ConnInfo to []_t
@@ -28,5 +31,9 @@ typedef enum
 } status_t;
 
 int MHD_background(int argc, char *const *argv); 
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
