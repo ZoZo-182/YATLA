@@ -13,6 +13,8 @@ sqlite3 *db = NULL;
 extern sqlite3 *db;
 #endif
 
+#define UNUSED(x) ((void)(x))
+
 
 // forward dec
 static enum MHD_Result handle_options(struct MHD_Connection *connection);
@@ -23,6 +25,7 @@ static enum MHD_Result handle_internal_server_error(struct MHD_Connection *conne
 static const char *user_error_str(status_t code);
 static void add_cors_headers(struct MHD_Response *response);
 static enum MHD_Result send_text_response(struct MHD_Connection *connection, unsigned int status_code, const char *body);
+static void request_callback(void *cls, struct MHD_Connection *connection, void **con_cls, enum MHD_RequestTerminationCode termination_code);
 
 
 static void add_cors_headers(struct MHD_Response *response) {
@@ -43,6 +46,25 @@ static enum MHD_Result send_text_response(struct MHD_Connection *connection, uns
   MHD_destroy_response(response);
 
   return ret;
+}
+
+static void request_callback(void *cls, struct MHD_Connection *connection, void **con_cls, enum MHD_RequestTerminationCode termination_code) {
+  UNUSED(cls);
+  UNUSED(connection);
+  UNUSED(termination_code);
+
+  ConnInfo *user_info = *con_cls;
+
+  if (!user_info) {
+    return;
+  }
+
+  if (user_info->pp) {
+    MHD_destroy_post_processor(user_info->pp);
+  }
+
+  destroy_conn_info(user_info);
+  *con_cls = NULL;
 }
 
 /***********
@@ -149,7 +171,6 @@ static enum MHD_Result post_iterator(void *cls, enum MHD_ValueKind kind,
   return MHD_YES;
 }
 
-
 static enum MHD_Result handle_request(void *cls, struct MHD_Connection *connection, const char *url,
     const char *method, const char *version, const char *upload_data, size_t *upload_data_size, void **con_cls) {
 
@@ -180,21 +201,13 @@ static enum MHD_Result handle_request(void *cls, struct MHD_Connection *connecti
       return MHD_YES;
     } 
       if (!user_info->first_name || !user_info->last_name || !user_info->email || !user_info->password) {
-        MHD_destroy_post_processor(user_info->pp);
-        destroy_conn_info(user_info);
         return handle_bad_request(connection, ERROR_REGISTER_USER);
       }
 
-      // change status_t to status_t
       status_t inserted_user = insert_user(db, user_info);
       if (inserted_user != SUCCESS) {
-        MHD_destroy_post_processor(user_info->pp);
-        destroy_conn_info(user_info);
         return handle_internal_server_error(connection, inserted_user);
       }
-
-      MHD_destroy_post_processor(user_info->pp);
-      destroy_conn_info(user_info);
 
       return handle_success(connection, inserted_user);
     
@@ -211,15 +224,10 @@ static enum MHD_Result handle_request(void *cls, struct MHD_Connection *connecti
     } 
 
     if (!user_info->email || !user_info->password) {
-      MHD_destroy_post_processor(user_info->pp);
-      destroy_conn_info(user_info);
       return handle_bad_request(connection, ERROR_LOGIN_USER);
     }
 
     status_t login_user = check_user(db, user_info); 
-
-    MHD_destroy_post_processor(user_info->pp);
-    destroy_conn_info(user_info);
 
     if (login_user != SUCCESS) {
       return handle_bad_request(connection, login_user);
@@ -228,7 +236,6 @@ static enum MHD_Result handle_request(void *cls, struct MHD_Connection *connecti
     return handle_success(connection, login_user);
 
   } else {
-    destroy_conn_info(user_info);
     return handle_not_found(connection, NOT_FOUND);
   }
   return MHD_NO;
@@ -252,7 +259,7 @@ int MHD_background(int argc, char *const *argv) {
   srandom((unsigned int)time(NULL));
   d = MHD_start_daemon(MHD_USE_DEBUG, atoi(argv[1]), NULL, NULL, &handle_request,
       NULL, MHD_OPTION_CONNECTION_TIMEOUT, (unsigned int)15,
-      MHD_OPTION_NOTIFY_COMPLETED, NULL, NULL, MHD_OPTION_END);
+      MHD_OPTION_NOTIFY_COMPLETED, &request_callback, NULL, MHD_OPTION_END);
   if (NULL == d)
     return 1;
   while (1) {
