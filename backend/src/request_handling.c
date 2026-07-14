@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <stdint.h>
 
 #ifdef TEST_BUILD
 sqlite3 *db = NULL;
@@ -26,6 +27,7 @@ static const char *user_error_str(status_t code);
 static void add_cors_headers(struct MHD_Response *response);
 static enum MHD_Result send_text_response(struct MHD_Connection *connection, unsigned int status_code, const char *body);
 static void request_callback(void *cls, struct MHD_Connection *connection, void **con_cls, enum MHD_RequestTerminationCode termination_code);
+static enum MHD_Result write_form_field(char **field, const char *data, uint64_t offset, size_t size);
 
 
 static void add_cors_headers(struct MHD_Response *response) {
@@ -65,6 +67,27 @@ static void request_callback(void *cls, struct MHD_Connection *connection, void 
 
   destroy_conn_info(user_info);
   *con_cls = NULL;
+}
+
+static enum MHD_Result write_form_field(char **field, const char *data, uint64_t offset, size_t size) {
+  if (offset > SIZE_MAX || size > SIZE_MAX - (size_t)offset - 1) {
+     return MHD_NO;
+  }
+
+  size_t required_size = size + (size_t)offset + 1;
+
+  // realloc space for the whole thing
+  char *resized = realloc(*field, required_size);
+  if (!resized) {
+    return MHD_NO;
+  }
+
+  // move pointer so new chunck isnt overwritting prev chunck
+  memcpy(resized + offset, data, size);
+  resized[size + offset] = '\0';
+  *field = resized;
+
+  return MHD_YES;
 }
 
 /***********
@@ -130,42 +153,30 @@ static const char *user_error_str(status_t code) {
   return str;
 }
 
-static enum MHD_Result post_iterator(void *cls, enum MHD_ValueKind kind,
-    const char *key, const char *filename,
-    const char *content_type,
-    const char *transfer_encoding,
-    const char *data, uint64_t off,
-    size_t size) {
+static enum MHD_Result post_iterator(void *cls, enum MHD_ValueKind kind, const char *key, const char *filename,
+    const char *content_type, const char *transfer_encoding, const char *data, uint64_t off, size_t size) {
+  UNUSED(kind);
+  UNUSED(content_type);
+  UNUSED(transfer_encoding);
+  UNUSED(filename);
+
   ConnInfo *user_info = cls;
 
   // put data received in user_info
   if (0 == strcmp("first_name", key)) {
-    user_info->first_name = strndup(data, size);
-    if (!user_info->first_name) {
-      fprintf(stderr, "error allocating using strndup (post_iterator)");
-      return MHD_NO;
-    }
+    return write_form_field(&user_info->first_name, data, off, size);
   }
+
   if (0 == strcmp("last_name", key)) {
-    user_info->last_name = strndup(data, size);
-    if (!user_info->last_name) {
-      fprintf(stderr, "error allocating using strndup (post_iterator)");
-      return MHD_NO;
-    }
+    return write_form_field(&user_info->last_name, data, off, size);
   }
+
   if (0 == strcmp("email", key)) {
-    user_info->email = strndup(data, size);
-    if (!user_info->email) {
-      fprintf(stderr, "error allocating using strndup (post_iterator)");
-      return MHD_NO;
-    }
+    return write_form_field(&user_info->email, data, off, size);
   }
+
   if (0 == strcmp("password", key)) {
-    user_info->password = strndup(data, size);
-    if (!user_info->password) {
-      fprintf(stderr, "error allocating using strndup (post_iterator)");
-      return MHD_NO;
-    }
+    return write_form_field(&user_info->password, data, off, size);
   }
 
   return MHD_YES;
