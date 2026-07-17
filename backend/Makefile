@@ -1,5 +1,8 @@
 CC = clang
-CFLAGS = -g -Wall
+CFLAGS = -std=c17 -g3 -Wall -Wextra -Wstrict-prototypes -Wmissing-prototypes -Wnull-dereference -Werror
+
+CXX = clang++
+CXXFLAGS = -std=c++17 -g3 -Wall -Wextra -Iinclude
 
 .PHONY: all clean
 

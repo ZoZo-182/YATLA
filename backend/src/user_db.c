@@ -66,7 +66,7 @@ status_t check_user(sqlite3 *db, ConnInfo *user_info) {
       return ERROR_INVALID_EMAIL;
     }
 
-    int correct_password = crypto_pwhash_str_verify(sqlite3_column_text(statement, 1), user_info->password, strlen(user_info->password));
+    int correct_password = crypto_pwhash_str_verify((const char *)sqlite3_column_text(statement, 1), user_info->password, strlen(user_info->password));
     /* more than once you have looked at this statement, forgot what it
      * does, and freaked out about it not being !correct_password.
      * look at the damn return type of correct_password -1 vs 0*/
